@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@vueform/multiselect": "^2.4.2",
     "gojs": "^2.2.11",
     "vue": "^3.2.25"
   },
