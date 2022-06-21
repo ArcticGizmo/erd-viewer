@@ -20,13 +20,19 @@ import ErdViewer from './components/ErdViewer.vue';
 import COLUMN_NAMES from './files/column_names.csv';
 import FOREIGN_KEYS from './files/foreign_keys.csv';
 
+const COLORS = {
+  primary: 'Green',
+  foreign: 'Orange',
+  value: 'Blue',
+};
+
 function createData(columns, foreignKeys) {
   const tables = columnsToTables(columns);
 
   const linkData = foreignKeysToLinks(foreignKeys);
 
   // need to pass in links so that items can be colored/styled correctly
-  const nodeData = tablesToNodeData(tables);
+  const nodeData = tablesToNodeData(tables, linkData);
 
   return { linkData, nodeData };
 }
@@ -39,7 +45,7 @@ function columnsToTables(columns) {
     lookup[key] = lookup[key] || [];
     lookup[key].push({
       name: row.COLUMN_NAME,
-      isKey: row.COLUMN_NAME === 'Id',
+      isKey: row.COLUMN_NAME === 'Id' || row.COLUMN_NAME === 'GUID',
       type: row.DATA_TYPE,
       nullable: row.IS_NULLABLE,
     });
@@ -56,15 +62,13 @@ function columnsToTables(columns) {
   });
 }
 
-function tablesToNodeData(tables) {
+function tablesToNodeData(tables, linkData) {
   return tables.map(t => {
     const items = t.columns.map(c => {
-      const figure = c.isKey ? 'Decision' : 'Hexagon';
-      const color = c.isKey ? 'orange' : 'blue';
+      const { color } = getNodeStyle(t, c, linkData);
       return {
         name: c.name,
         isKey: c.isKey,
-        figure,
         color,
         data: c,
       };
@@ -79,6 +83,22 @@ function tablesToNodeData(tables) {
       items,
     };
   });
+}
+
+function getNodeStyle(table, column, linkData) {
+  let color = COLORS.value;
+  if (column.isKey) {
+    color = COLORS.primary;
+  } else {
+    const hasLink = linkData.find(c => c.to === table.key && c.data.column === column.name);
+    if (hasLink) {
+      color = COLORS.foreign;
+    }
+  }
+
+  return {
+    color,
+  };
 }
 
 function foreignKeysToLinks(rows) {
