@@ -89,9 +89,8 @@ function foreignKeysToLinks(rows) {
     return {
       from: fromName,
       to: toName,
-      text: 'Apple',
-      toText: 'b',
-      fromText: 'a',
+      text: r.referenced_column,
+      toText: r.column,
       data: r,
     };
   });

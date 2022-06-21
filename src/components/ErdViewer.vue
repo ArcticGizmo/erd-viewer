@@ -192,7 +192,7 @@ export default {
         wrapper.removeChild(wrapper.firstChild);
       }
 
-      const div = document.createElement('div', { id: 'apple' });
+      const div = document.createElement('div', { id: 'diagram' });
       div.setAttribute('id', DIV_NAME);
       div.style.width = '100%';
       div.style.height = '100%';
