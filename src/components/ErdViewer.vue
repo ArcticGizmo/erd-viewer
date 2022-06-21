@@ -226,6 +226,10 @@ function getData() {
 }
 
 export default {
+  props: {
+    nodeData: { type: Array, default: () => [] },
+    linkData: { type: Array, default: () => [] },
+  },
   data() {
     return {
       savedState: null,
@@ -241,9 +245,7 @@ export default {
       setNodeTemplate(myDiagram);
       setLinkTemplate(myDiagram);
 
-      const { nodeDataArray, linkDataArray } = getData();
-
-      setModel(myDiagram, nodeDataArray, linkDataArray);
+      setModel(myDiagram, this.nodeData, this.linkData);
     },
     onSave() {
       console.dir(this.$refs.diagram.value);
