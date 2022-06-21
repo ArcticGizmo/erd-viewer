@@ -16,9 +16,6 @@ function createData(columns, foreignKeys) {
   // need to pass in links so that items can be colored/styled correctly
   const nodeData = tablesToNodeData(tables);
 
-  console.dir(linkData[0])
-  console.dir(nodeData[0])
-
   return { linkData, nodeData };
 }
 
@@ -26,7 +23,7 @@ function columnsToTables(columns) {
   // group columns into tables
   const lookup = {};
   columns.forEach(row => {
-    const key = `${row.TABLE_NAME}|${row.TABLE_SCHEMA}`;
+    const key = `${row.TABLE_SCHEMA}|${row.TABLE_NAME}`;
     lookup[key] = lookup[key] || [];
     lookup[key].push({
       name: row.COLUMN_NAME,
