@@ -1,10 +1,9 @@
 <template>
   <div class="erd-viewer">
     <div class="actions">
-      <button @click="onSave">Save</button>
-      <button @click="onLoad">Load</button>
+      Actions
     </div>
-    <div ref="diagram" id="diagram"></div>
+    <div ref="container" class="container"></div>
   </div>
 </template>
 
@@ -13,17 +12,6 @@ import go from 'gojs';
 
 const DIV_NAME = 'diagram';
 const $ = go.GraphObject.make;
-const COLORS = {
-  red: '#be4b15',
-  green: '#52ce60',
-  blue: '#6ea5f8',
-  lightred: '#fd8852',
-  lightblue: '#afd4fe',
-  lightgreen: '#b9e986',
-  pink: '#faadc1',
-  purple: '#d689ff',
-  orange: '#fdb400',
-};
 
 function createDiagram() {
   return $(go.Diagram, DIV_NAME, {
@@ -175,56 +163,6 @@ function buildItemTemplate() {
   );
 }
 
-function getData() {
-  const nodeDataArray = [
-    {
-      key: 'Products',
-      items: [
-        { name: 'ProductID', iskey: true, figure: 'Decision', color: COLORS.red },
-        { name: 'ProductName', iskey: false, figure: 'Hexagon', color: COLORS.blue },
-        { name: 'SupplierID', iskey: false, figure: 'Decision', color: 'purple' },
-        { name: 'CategoryID', iskey: false, figure: 'Decision', color: 'purple' },
-      ],
-    },
-    {
-      key: 'Suppliers',
-      items: [
-        { name: 'SupplierID', iskey: true, figure: 'Decision', color: COLORS.red },
-        { name: 'CompanyName', iskey: false, figure: 'Hexagon', color: COLORS.blue },
-        { name: 'ContactName', iskey: false, figure: 'Hexagon', color: COLORS.blue },
-        { name: 'Address', iskey: false, figure: 'Hexagon', color: COLORS.blue },
-      ],
-    },
-    {
-      key: 'Categories',
-      items: [
-        { name: 'CategoryID', iskey: true, figure: 'Decision', color: COLORS.red },
-        { name: 'CategoryName', iskey: false, figure: 'Hexagon', color: COLORS.blue },
-        { name: 'Description', iskey: false, figure: 'Hexagon', color: COLORS.blue },
-        { name: 'Picture', iskey: false, figure: 'TriangleUp', color: COLORS.pink },
-      ],
-    },
-    {
-      key: 'Order Details',
-      items: [
-        { name: 'OrderID', iskey: true, figure: 'Decision', color: COLORS.red },
-        { name: 'ProductID', iskey: true, figure: 'Decision', color: COLORS.red },
-        { name: 'UnitPrice', iskey: false, figure: 'Circle', color: COLORS.green },
-        { name: 'Quantity', iskey: false, figure: 'Circle', color: COLORS.green },
-        { name: 'Discount', iskey: false, figure: 'Circle', color: COLORS.green },
-      ],
-    },
-  ];
-
-  const linkDataArray = [
-    { from: 'Products', to: 'Suppliers', text: '0..N', toText: '1' },
-    { from: 'Products', to: 'Categories', text: '0..N', toText: '1' },
-    { from: 'Order Details', to: 'Products', text: '0..N', toText: '1' },
-  ];
-
-  return { nodeDataArray, linkDataArray };
-}
-
 export default {
   props: {
     nodeData: { type: Array, default: () => [] },
@@ -233,24 +171,42 @@ export default {
   data() {
     return {
       savedState: null,
+      diagram: null,
     };
   },
+  watch: {
+    nodeData: {
+      immediate: false,
+      handler() {
+        this.update();
+      },
+    },
+  },
   mounted() {
-    this.init();
+    this.update();
   },
   methods: {
-    init() {
-      const myDiagram = createDiagram();
+    update() {
+      const wrapper = this.$refs.container;
+      while (wrapper.firstChild) {
+        wrapper.removeChild(wrapper.firstChild);
+      }
 
-      setNodeTemplate(myDiagram);
-      setLinkTemplate(myDiagram);
+      const div = document.createElement('div', { id: 'apple' });
+      div.setAttribute('id', DIV_NAME);
+      div.style.width = '100%';
+      div.style.height = '100%';
+      wrapper.appendChild(div);
 
-      setModel(myDiagram, this.nodeData, this.linkData);
+      const diagram = createDiagram();
+
+      setNodeTemplate(diagram);
+      setLinkTemplate(diagram);
+
+      setModel(diagram, this.nodeData, this.linkData);
+
+      this.diagram = diagram;
     },
-    onSave() {
-      console.dir(this.$refs.diagram.value);
-    },
-    onLoad() {},
   },
 };
 </script>
@@ -260,8 +216,9 @@ export default {
   display: flex;
 }
 
-#diagram {
+.container {
   width: 100%;
   height: 600px;
+  border: 0.1px solid gray;
 }
 </style>

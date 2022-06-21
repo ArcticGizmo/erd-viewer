@@ -1,8 +1,20 @@
 <template>
-  <ErdViewer :nodeData="nodeData" :linkData="linkData" />
+  <div class="app">
+    <multiselect v-model="selected" :options="schemas" mode="multiple">
+      <template v-slot:multiplelabel="{ values }">
+        <span v-for="value in values" :key="value.value" class="item">
+          <span>{{ value.label }}</span>
+          <span class="x-close" @click="onRemoveSelected(value.value)">x</span>
+        </span>
+      </template>
+    </multiselect>
+    <!-- Add a multi select that determines what node data to display -->
+    <ErdViewer :nodeData="filteredNodeData" :linkData="linkData" />
+  </div>
 </template>
 
 <script>
+import Multiselect from '@vueform/multiselect';
 import ErdViewer from './components/ErdViewer.vue';
 
 import COLUMN_NAMES from './files/column_names.csv';
@@ -34,7 +46,7 @@ function columnsToTables(columns) {
   });
 
   return Object.entries(lookup).map(([key, columns]) => {
-    const [tableName, schema] = key.split('|');
+    const [schema, tableName] = key.split('|');
     return {
       key,
       name: tableName,
@@ -60,6 +72,10 @@ function tablesToNodeData(tables) {
 
     return {
       key: t.key,
+      data: {
+        name: t.name,
+        schema: t.schema,
+      },
       items,
     };
   });
@@ -76,12 +92,22 @@ function foreignKeysToLinks(rows) {
       text: 'Apple',
       toText: 'b',
       fromText: 'a',
+      data: r,
     };
   });
 }
 
+function uniq(arr) {
+  return [...new Set(arr)];
+}
+
+function filterNodeData(data, selected) {
+  return data.filter(d => selected.includes(d.data.schema));
+}
+
 export default {
   components: {
+    Multiselect,
     ErdViewer,
   },
   data() {
@@ -89,12 +115,26 @@ export default {
     return {
       linkData,
       nodeData,
+      selected: [],
     };
+  },
+  computed: {
+    schemas() {
+      return uniq(this.nodeData.map(r => r.data.schema)).sort((a, b) => a.localeCompare(b));
+    },
+    filteredNodeData() {
+      return filterNodeData(this.nodeData, this.selected);
+    },
+  },
+  methods: {
+    onRemoveSelected(value) {
+      this.selected = this.selected.filter(s => s !== value);
+    },
   },
 };
 </script>
 
-<script></script>
+<style src="@vueform/multiselect/themes/default.css"></style>
 
 <style>
 #app {
@@ -104,5 +144,38 @@ export default {
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
+}
+
+.multiselect {
+  justify-content: flex-start;
+}
+
+.multiselect .item {
+  background-color: rgb(175, 238, 181);
+  margin: 0.25rem;
+  padding: 0.25rem;
+  border: 1px solid gray;
+  border-radius: 5px;
+}
+
+.multiselect .item .x-close {
+  cursor: pointer;
+  margin-left: 0.5rem;
+}
+
+.multiselect .item .x-close:hover {
+  cursor: pointer;
+  margin-left: 0.5rem;
+  opacity: 0.75;
+}
+
+.multiselect .multiselect-clear {
+  position: absolute;
+  right: 1.5rem;
+}
+
+.multiselect .multiselect-caret {
+  position: absolute;
+  right: 0;
 }
 </style>
