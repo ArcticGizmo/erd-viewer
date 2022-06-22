@@ -1,7 +1,38 @@
-# Vue 3 + Vite
+# ERD-Viewer
+used to visualise and erd from csv definitions
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+Add the following filtes to src/files
 
-## Recommended IDE Setup
+**NOTE**
+- when downloading from mssql ensure that the headers come with you [configuration](https://stackoverflow.com/questions/10677133/saving-results-with-headers-in-sql-server-management-studio)
 
-- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar)
+## column_names.csv
+
+```sql
+SELECT *
+FROM INFORMATION_SCHEMA.COLUMNS
+ORDER BY TABLE_SCHEMA, TABLE_NAME
+```
+
+## foreign_keys.csv
+```sql
+SELECT  obj.name AS FK_NAME,
+    sch.name AS [schema_name],
+    tab1.name AS [table],
+    col1.name AS [column],
+    tab2.name AS [referenced_table],
+    col2.name AS [referenced_column]
+FROM sys.foreign_key_columns fkc
+INNER JOIN sys.objects obj
+    ON obj.object_id = fkc.constraint_object_id
+INNER JOIN sys.tables tab1
+    ON tab1.object_id = fkc.parent_object_id
+INNER JOIN sys.schemas sch
+    ON tab1.schema_id = sch.schema_id
+INNER JOIN sys.columns col1
+    ON col1.column_id = parent_column_id AND col1.object_id = tab1.object_id
+INNER JOIN sys.tables tab2
+    ON tab2.object_id = fkc.referenced_object_id
+INNER JOIN sys.columns col2
+    ON col2.column_id = referenced_column_id AND col2.object_id = tab2.object_id
+```
