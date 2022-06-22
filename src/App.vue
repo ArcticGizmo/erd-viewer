@@ -8,7 +8,6 @@
         </span>
       </template>
     </multiselect>
-    <!-- Add a multi select that determines what node data to display -->
     <ErdViewer :nodeData="filteredNodeData" :linkData="linkData" />
   </div>
 </template>
@@ -65,16 +64,19 @@ function columnsToTables(columns) {
 function tablesToNodeData(tables, linkData) {
   return tables.map(t => {
     const items = t.columns.map(c => {
-      const { color } = getNodeStyle(t, c, linkData);
+      const { color, link } = getNodeStyle(t, c, linkData);
       return {
         name: c.name,
         isKey: c.isKey,
         color,
-        data: c,
+        column: c,
+        table: t,
+        link,
       };
     });
 
     return {
+      type: 'node',
       key: t.key,
       data: {
         name: t.name,
@@ -87,17 +89,19 @@ function tablesToNodeData(tables, linkData) {
 
 function getNodeStyle(table, column, linkData) {
   let color = COLORS.value;
+  let link;
   if (column.isKey) {
     color = COLORS.primary;
   } else {
-    const hasLink = linkData.find(c => c.to === table.key && c.data.column === column.name);
-    if (hasLink) {
+    link = linkData.find(c => c.to === table.key && c.data.column === column.name);
+    if (link) {
       color = COLORS.foreign;
     }
   }
 
   return {
     color,
+    link,
   };
 }
 
@@ -106,10 +110,13 @@ function foreignKeysToLinks(rows) {
     const fromName = `${r.schema_name}|${r.referenced_table}`;
     const toName = `${r.schema_name}|${r.table}`;
 
+    const text = r.referenced_column.toLowerCase() === 'id' ? '' : r.column;
+
     return {
+      type: 'link',
       from: fromName,
       to: toName,
-      text: r.referenced_column,
+      text,
       toText: r.column,
       data: r,
     };
@@ -134,7 +141,7 @@ export default {
     return {
       linkData,
       nodeData,
-      selected: [],
+      selected: ['Planning'],
     };
   },
   computed: {

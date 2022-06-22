@@ -1,8 +1,6 @@
 <template>
   <div class="erd-viewer">
-    <div class="actions">
-      Actions
-    </div>
+    <div class="actions">Actions</div>
     <div ref="container" class="container"></div>
   </div>
 </template>
@@ -32,7 +30,7 @@ function setModel(diagram, nodeDataArray, linkDataArray) {
   });
 }
 
-function setNodeTemplate(diagram) {
+function setNodeTemplate(diagram, handleClick) {
   diagram.nodeTemplate = $(
     go.Node,
     'Auto', // the whole node panel
@@ -85,7 +83,7 @@ function setNodeTemplate(diagram) {
           alignment: go.Spot.TopLeft,
           defaultAlignment: go.Spot.Left,
           stretch: go.GraphObject.Horizontal,
-          itemTemplate: buildItemTemplate(),
+          itemTemplate: buildItemTemplate(handleClick),
         },
         new go.Binding('itemArray', 'items'),
       ),
@@ -107,6 +105,14 @@ function setLinkTemplate(diagram) {
     $(
       go.Shape, // the link shape
       { stroke: '#303B45', strokeWidth: 2.5 },
+      // the Shape.stroke color depends on whether Link.isHighlighted is true
+      new go.Binding('stroke', 'isHighlighted', function (h) {
+        return h ? 'red' : 'black';
+      }).ofObject(),
+      // the Shape.strokeWidth depends on whether Link.isHighlighted is true
+      new go.Binding('strokeWidth', 'isHighlighted', function (h) {
+        return h ? 3 : 1;
+      }).ofObject(),
     ),
     $(
       go.TextBlock, // the "from" label
@@ -135,10 +141,13 @@ function setLinkTemplate(diagram) {
   );
 }
 
-function buildItemTemplate() {
+function buildItemTemplate(handleClick) {
   return $(
     go.Panel,
     'Horizontal',
+    {
+      click: (e, shape) => handleClick(shape.data),
+    },
     $(
       go.Shape,
       {
@@ -172,6 +181,7 @@ export default {
     return {
       savedState: null,
       diagram: null,
+      isHighlighted: false,
     };
   },
   watch: {
@@ -200,12 +210,51 @@ export default {
 
       const diagram = createDiagram();
 
-      setNodeTemplate(diagram);
+      setNodeTemplate(diagram, this.onItemSelect);
       setLinkTemplate(diagram);
 
       setModel(diagram, this.nodeData, this.linkData);
 
+      diagram.addDiagramListener('ChangedSelection', () => this.updateHighlights());
+
       this.diagram = diagram;
+    },
+    updateHighlights() {
+      const diagram = this.diagram;
+      const selection = diagram.selection.first();
+
+      if (!selection) {
+        diagram.nodes.each(node => (node.isHighlighted = false));
+        diagram.links.each(link => (link.isHighlighted = false));
+        this.isHighlighted = false;
+      }
+    },
+    onItemSelect(item) {
+      const link = item.link;
+      if (!link) {
+        return;
+      }
+
+      const node = this.diagram.findNodeForKey(link.to);
+
+      if (!node) {
+        console.error('link missing');
+        return;
+      }
+
+      if (this.isHighlighted) {
+        this.diagram.links.each(l => (l.isHighlighted = false));
+        this.isHighlighted = false;
+        return;
+      }
+
+      node.findLinksConnected().each(function (l) {
+        if (l.data.to === link.to && l.data.to === link.to && l.data.toText === link.toText) {
+          l.isHighlighted = true;
+        }
+      });
+
+      this.isHighlighted = true;
     },
   },
 };
