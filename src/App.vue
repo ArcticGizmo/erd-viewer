@@ -1,20 +1,17 @@
 <template>
   <div class="app">
-    <multiselect v-model="selected" :options="schemas" mode="multiple">
-      <template v-slot:multiplelabel="{ values }">
-        <span v-for="value in values" :key="value.value" class="item">
-          <span>{{ value.label }}</span>
-          <span class="x-close" @click="onRemoveSelected(value.value)">x</span>
-        </span>
-      </template>
-    </multiselect>
-    <ErdViewer :nodeData="filteredNodeData" :linkData="linkData" />
+    <div class="select">
+      <button @click="onSetMode('schema')">By Schema</button>
+      <button @click="onSetMode('table')">By Table</button>
+    </div>
+    <BySchema v-if="mode === 'schema'" :nodeData="nodeData" :linkData="linkData" />
+    <ByTable v-if="mode === 'table'" :nodeData="nodeData" :linkData="linkData" />
   </div>
 </template>
 
 <script>
-import Multiselect from '@vueform/multiselect';
-import ErdViewer from './components/ErdViewer.vue';
+import BySchema from './components/BySchema.vue';
+import ByTable from './components/ByTable.vue';
 
 import COLUMN_NAMES from './files/column_names.csv';
 import FOREIGN_KEYS from './files/foreign_keys.csv';
@@ -123,44 +120,27 @@ function foreignKeysToLinks(rows) {
   });
 }
 
-function uniq(arr) {
-  return [...new Set(arr)];
-}
-
-function filterNodeData(data, selected) {
-  return data.filter(d => selected.includes(d.data.schema));
-}
-
 export default {
   components: {
-    Multiselect,
-    ErdViewer,
+    BySchema,
+    ByTable,
   },
   data() {
     const { linkData, nodeData } = createData(COLUMN_NAMES, FOREIGN_KEYS);
     return {
       linkData,
       nodeData,
-      selected: ['Planning'],
+      mode: 'schema',
     };
   },
-  computed: {
-    schemas() {
-      return uniq(this.nodeData.map(r => r.data.schema)).sort((a, b) => a.localeCompare(b));
-    },
-    filteredNodeData() {
-      return filterNodeData(this.nodeData, this.selected);
-    },
-  },
   methods: {
-    onRemoveSelected(value) {
-      this.selected = this.selected.filter(s => s !== value);
+    onSetMode(mode) {
+      this.mode = mode;
     },
   },
 };
 </script>
 
-<style src="@vueform/multiselect/themes/default.css"></style>
 
 <style>
 #app {
@@ -170,38 +150,5 @@ export default {
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
-}
-
-.multiselect {
-  justify-content: flex-start;
-}
-
-.multiselect .item {
-  background-color: rgb(175, 238, 181);
-  margin: 0.25rem;
-  padding: 0.25rem;
-  border: 1px solid gray;
-  border-radius: 5px;
-}
-
-.multiselect .item .x-close {
-  cursor: pointer;
-  margin-left: 0.5rem;
-}
-
-.multiselect .item .x-close:hover {
-  cursor: pointer;
-  margin-left: 0.5rem;
-  opacity: 0.75;
-}
-
-.multiselect .multiselect-clear {
-  position: absolute;
-  right: 1.5rem;
-}
-
-.multiselect .multiselect-caret {
-  position: absolute;
-  right: 0;
 }
 </style>
